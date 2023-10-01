@@ -8,17 +8,19 @@ title = "Nikxy&#60;Dev&#62;"
   isoCode = "en"
   rtl = false
   dateFormat = "2 January 2006"
-  # logo = "img/logo.png"
-  # secondaryLogo = "img/secondary-logo.png"
-  description = "My awesome website"
+  logo = "logo.png"
+  secondaryLogo = "logo2.png"
+  description = "My awesome personal website"
   # copyright = "Copy, _right?_ :thinking_face:"
 
 [author]
   name = "Diana Melnychuk (Nikxy)"
-#   image = "img/blowfish_logo.png"
-  headline = "I'm only human"
-  bio = "A little bit about you"
-#   links = [
+  image = "profile.jpg"
+  headline = "DevOps & Full-Stack Developer"
+  bio = "DevOps & Full-Stack Developer"
+  links = [
+    { github = "https://github.com/nikxy" },
+    { linkedin = "https://linkedin.com/in/nikxy" },
 #     { email = "mailto:hello@your_domain.com" },
 #     { link = "https://link-to-some-website.com/" },
 #     { amazon = "https://www.amazon.com/hz/wishlist/ls/wishlist-id" },
@@ -31,7 +33,7 @@ title = "Nikxy&#60;Dev&#62;"
 #     { facebook = "https://facebook.com/username" },
 #     { flickr = "https://www.flickr.com/photos/username/" },
 #     { foursquare = "https://foursquare.com/username" },
-#     { github = "https://github.com/username" },
+     
 #     { gitlab = "https://gitlab.com/username" },
 #     { google = "https://www.google.com/" },
 #     { hashnode = "https://username.hashnode.dev" },
@@ -39,7 +41,7 @@ title = "Nikxy&#60;Dev&#62;"
 #     { keybase = "https://keybase.io/username" },
 #     { kickstarter = "https://www.kickstarter.com/profile/username" },
 #     { lastfm = "https://lastfm.com/user/username" },
-#     { linkedin = "https://linkedin.com/in/username" },
+
 #     { mastodon = "https://mastodon.instance/@username" },
 #     { medium = "https://medium.com/username" },
 #     { microsoft = "https://www.microsoft.com/" },
@@ -61,4 +63,4 @@ title = "Nikxy&#60;Dev&#62;"
 #     { whatsapp = "https://wa.me/phone-number" },
 #     { youtube = "https://youtube.com/username" },
 #     { ko-fi = "https://ko-fi.com/username" },
-#   ]
+   ]
