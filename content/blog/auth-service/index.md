@@ -202,6 +202,5 @@ withCredentials([usernamePassword(
 
 
 ## Summary
-This is my first project on AWS, I used it as a learning ground for my AWS Certification and Jenkins.  
-I learned a lot while creating it and excited to learn and use the AWS cloud and Jenkins.  
+This is my first project on AWS, I used it as a learning ground for my AWS Certifications and Jenkins. I learned a lot while creating it and I'm excited to use the AWS cloud and Jenkins.  
 For future projects I plan to use also AWS's CI/CD with CodePipeline.
