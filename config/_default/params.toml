@@ -35,7 +35,7 @@ smartTOC = false
   showScrollToTop = true
 
 [homepage]
-  layout = "background" # valid options: page, profile, hero, card, background, custom
+  layout = "hero" # valid options: page, profile, hero, card, background, custom
   homepageImage = "lily-pads.jpg" # used in: hero, and card
   showRecent = true
   showRecentItems = 5
