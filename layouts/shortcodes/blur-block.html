@@ -1,0 +1,39 @@
+<style>
+    .blur-block {
+        position: relative;
+        padding: 1rem;
+        color: white;
+        text-shadow: 1px 1px .2rem rgba(0, 0, 0, .5);
+    }
+    .blur-block .background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background:rgba(255, 255, 255, 0.1);
+        border-radius: 10%;
+        -webkit-filter: blur(.5rem);
+        filter: blur(.5rem);
+        z-index: 1;
+        backdrop-filter: blur(1px);
+        opacity: .8;
+    }
+    .blur-block .content {
+        position: relative;
+        z-index: 2;
+    }
+    .blur-block p, .blur-block h1, .blur-block h2, .blur-block h3, .blur-block h4, .blur-block h5, .blur-block h6 {
+        margin: .5rem 0;
+        color: white;
+        
+    }
+    
+    
+</style>
+<div class="blur-block">
+    <div class="background"></div>
+    <div class="content">
+        {{ .Inner | markdownify }}
+    </div>
+</div>
