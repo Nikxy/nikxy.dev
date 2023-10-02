@@ -8,7 +8,7 @@
   {{/* Title */}}
   {{ if .IsHome -}}
   <title>{{ .Site.Title | emojify }}</title>
-  <meta name="title" content="{{ .Site.Title | emojify }}" />
+  <meta name="title" content="{{ .Site.Author.name | emojify }}" />
   <meta property="og:title" content="{{ .Site.Author.name | emojify }}" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="{{ .Permalink }}" />
