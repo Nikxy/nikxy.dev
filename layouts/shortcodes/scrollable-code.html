@@ -1,0 +1,81 @@
+{{ with not ( .Page.Scratch.Get "scrollable-code-initialized" ) }}
+<style>
+    .scrollable-code {
+        position: relative;
+    }
+
+    .scrollable-code > button {
+        position: absolute;
+        top: .5rem;
+        right: .5rem;
+
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0 0.5rem 0.2rem 0.5rem;
+        border-radius: 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .scrollable-code > button:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    .scrollable-code > pre {
+        max-height: 25vh;
+        overflow: scroll-y;
+        margin: 0;
+    }
+    .scrollable-code .copied-text {
+        display: none;
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.scrollable-code').forEach((el) => {
+            const button = el.querySelector('button');
+            const code = el.querySelector('code');
+            const pre = el.querySelector('pre');
+            const copyText = button.querySelector('.copy-text');
+            const copiedText = button.querySelector('.copied-text');
+
+            if(pre.scrollHeight > pre.clientHeight)
+                button.style.right = "1.5rem";
+
+            button.addEventListener('click', () => {
+                navigator.clipboard.writeText(code.innerText);
+
+                copyText.style.display = 'none';
+                copiedText.style.display = 'inline-block';
+                setTimeout(() => {
+                    copyText.style.display = 'inline-block';
+                    copiedText.style.display = 'none';
+                }, 1500);
+            });
+        });
+    }, false);
+
+    function scrollbarVisible(element) {
+        return element.scrollHeight > element.clientHeight;
+    }
+</script>
+{{ end }}
+
+{{ $iconCopy := resources.Get "icons/copy.svg" }}
+{{ $iconCheck := resources.Get "icons/check.svg" }}
+{{ .Page.Scratch.Set "scrollable-code-initialized" true }}
+
+<div class="scrollable-code">
+    <button>
+        <span class="copy-text">
+            <span class="relative inline-block align-text-bottom icon">
+                {{ $iconCopy.Content | safeHTML }}
+            </span>
+            Copy
+        </span>
+        <span class="copied-text">
+            <span class="relative inline-block align-text-bottom icon">
+                {{ $iconCheck.Content | safeHTML }}
+            </span>
+            Copied!
+        </span>
+    </button>
+    <pre><code>{{ .Inner }}</code></pre>
+</div>
+

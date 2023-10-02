@@ -1,0 +1,82 @@
+{{ with not ( .Page.Scratch.Get "code-include-initialized" ) }}
+<style>
+    .code-include {
+        position: relative;
+    }
+
+    .code-include > button {
+        position: absolute;
+        top: .5rem;
+        right: .5rem;
+
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0 0.5rem 0.2rem 0.5rem;
+        border-radius: 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .code-include > button:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    .code-include > pre {
+        max-height: 25vh;
+        overflow: scroll-y;
+        margin: 0;
+    }
+    .code-include .copied-text {
+        display: none;
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.code-include').forEach((el) => {
+            const button = el.querySelector('button');
+            const code = el.querySelector('code');
+            const pre = el.querySelector('pre');
+            const copyText = button.querySelector('.copy-text');
+            const copiedText = button.querySelector('.copied-text');
+
+            if(pre.scrollHeight > pre.clientHeight)
+                button.style.right = "1.5rem";
+
+            button.addEventListener('click', () => {
+                navigator.clipboard.writeText(code.innerText);
+
+                copyText.style.display = 'none';
+                copiedText.style.display = 'inline-block';
+                setTimeout(() => {
+                    copyText.style.display = 'inline-block';
+                    copiedText.style.display = 'none';
+                }, 1500);
+            });
+        });
+    }, false);
+
+    function scrollbarVisible(element) {
+        return element.scrollHeight > element.clientHeight;
+    }
+</script>
+{{ end }}
+
+{{ $iconCopy := resources.Get "icons/copy.svg" }}
+{{ $iconCheck := resources.Get "icons/check.svg" }}
+{{ .Page.Scratch.Set "code-include-initialized" true }}
+{{ $code := .Page.Resources.Get (.Get 0) }}
+
+<div class="code-include">
+    <button>
+        <span class="copy-text">
+            <span class="relative inline-block align-text-bottom icon">
+                {{ $iconCopy.Content | safeHTML }}
+            </span>
+            Copy
+        </span>
+        <span class="copied-text">
+            <span class="relative inline-block align-text-bottom icon">
+                {{ $iconCheck.Content | safeHTML }}
+            </span>
+            Copied!
+        </span>
+    </button>
+    <pre><code>{{ $code.Content }}</code></pre>
+</div>
+
