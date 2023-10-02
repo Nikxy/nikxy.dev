@@ -1,6 +1,6 @@
 ---
 title: Simple serverless auth service on AWS
-date: 2023-09-28
+date: 2023-10-02
 draft: false
 
 description: Documentation of a simple JWT auth service I have developed on AWS
