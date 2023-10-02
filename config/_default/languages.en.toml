@@ -8,14 +8,14 @@ title = "Nikxy&#60;Dev&#62;"
   isoCode = "en"
   rtl = false
   dateFormat = "2 January 2006"
-  logo = "logo.png"
-  secondaryLogo = "logo2.png"
+  logo = "img/logo.png"
+  secondaryLogo = "img/logo2.png"
   description = "My awesome personal website"
   # copyright = "Copy, _right?_ :thinking_face:"
 
 [author]
   name = "Diana (Nikxy) Melnychuk"
-  image = "profile.jpg"
+  image = "img/profile.jpg"
   headline = "DevOps & Full-Stack Developer"
   bio = "DevOps & Full-Stack Developer"
   links = [
