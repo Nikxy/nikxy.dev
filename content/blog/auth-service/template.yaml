@@ -1,0 +1,356 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Template for an auth service
+Parameters:
+  EnvironmentType:
+    Type: String
+    Description: The environment of the service
+    Default: prod
+    AllowedValues:
+      - prod
+      - test
+    ConstraintDescription: Must specify prod or test.
+  ServiceName:
+    Type: String
+    Description: The name of the service
+  Domain:
+    Type: String
+    Description: The domain name of the service
+  DomainCertificate:
+    Type: String
+    Description: The ARN of the domain certificate
+  JWTSecretsKey:
+    Type: String
+    Description: The key of the jwt secret in secret manager
+Conditions:
+  ProductionEnvironment: !Equals 
+    - !Ref EnvironmentType
+    - prod
+  TestEnvironment: !Equals 
+    - !Ref EnvironmentType
+    - test
+  NotTestEnvironment: !Not [!Equals [!Ref EnvironmentType, test]]
+  
+Resources:
+  JWTSecrets:
+    Type: AWS::SecretsManager::Secret
+    Condition: ProductionEnvironment
+    Properties:
+      Description: JWT secrets for the auth service
+      Name: !Ref JWTSecretsKey
+
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Condition: ProductionEnvironment
+    Properties:
+      TableName: !Ref ServiceName
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: doc_type
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+        - AttributeName: doc_type
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: "/"
+      RoleName: !Sub "${ServiceName}-lambda"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+
+      # Create a policy attached to the role
+      # Allow Cloudwatch logging
+      Policies:
+        - PolicyName: "AllowLogging"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - logs:*
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+        - PolicyName: "ReadSecrets"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref JWTSecrets
+        - PolicyName: "AccessDynamoDB"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - dynamodb:Scan
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource: !GetAtt DynamoDBTable.Arn
+
+  Lambda: # Production Lambda
+    Type: AWS::Lambda::Function
+    Condition: ProductionEnvironment
+    Properties:
+      Description: Auth service lambda function
+      FunctionName: !Ref ServiceName
+      Timeout: 10
+      Architectures:
+        - !If [ProductionEnvironment,arm64,x86_64]
+      Runtime: nodejs18.x
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          DB_TABLE: !Ref ServiceName
+          JWT_SECRET: !Ref JWTSecretsKey
+          REGION: !Ref AWS::Region
+          LOCAL_ENDPOINT: !If [TestEnvironment,"http://localstack",false]
+    Metadata:
+        aws:asset:path: "./src"
+        aws:asset:property: "Code"
+
+  LambdaInvoke:
+    Type: AWS::Lambda::Permission
+    
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !GetAtt Lambda.Arn
+      Principal: "apigateway.amazonaws.com"
+
+  ApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    
+    Properties:
+      Name: !Ref ServiceName
+      Description: API Gateway for the auth service
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  ApiLoginResource:
+    Type: AWS::ApiGateway::Resource
+    
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: login
+
+  LoginOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId:
+        Ref: ApiGateway
+      ResourceId:
+        Ref: ApiLoginResource
+      HttpMethod: OPTIONS
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: "{\"statusCode\": 200}"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+  
+  LoginPost:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId:
+        Ref: ApiGateway
+      ResourceId:
+        Ref: ApiLoginResource
+      HttpMethod: POST
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${Lambda.Arn}/invocations"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseModels:
+            application/json: Empty
+        - StatusCode: 400
+          ResponseModels:
+            application/json: Error
+
+  ApiRefreshResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: refresh
+
+  RefreshOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId:
+        Ref: ApiGateway
+      ResourceId:
+        Ref: ApiRefreshResource
+      HttpMethod: OPTIONS
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: "{\"statusCode\": 200}"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+  
+  RefreshGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId:
+        Ref: ApiGateway
+      ResourceId:
+        Ref: ApiRefreshResource
+      HttpMethod: GET
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${Lambda.Arn}/invocations"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseModels:
+            application/json: Empty
+        - StatusCode: 400
+          ResponseModels:
+            application/json: Error
+
+  ApiStatusResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: status
+
+  StatusOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId:
+        Ref: ApiGateway
+      ResourceId:
+        Ref: ApiStatusResource
+      HttpMethod: OPTIONS
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: "{\"statusCode\": 200}"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+  
+  StatusGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId:
+        Ref: ApiGateway
+      ResourceId:
+        Ref: ApiStatusResource
+      HttpMethod: GET
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${Lambda.Arn}/invocations"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseModels:
+            application/json: Empty
+        - StatusCode: 400
+          ResponseModels:
+            application/json: Error
+
+
+  ApiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - LoginPost
+      - LoginOptions
+      - RefreshGet
+      - RefreshOptions
+      - StatusGet
+      - StatusOptions
+    Properties:
+      Description: API Deployment for the auth service
+      RestApiId: !Ref ApiGateway
+      StageName: prod
+
+  ApiDomain:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      RegionalCertificateArn: !Ref DomainCertificate
+      DomainName: !Ref Domain
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  ApiMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn:
+      - ApiGatewayDeployment
+    Properties:
+      DomainName: !Ref ApiDomain
+      RestApiId: !Ref ApiGateway
+      Stage: prod
+
+Outputs:
+  ApiGatewayInvokeURL:
+    Description: Invoke URL for the auth service api gateway
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/prod"
+
+  DistributionURL:
+    Description: Amazon RegionalDomainName to set up custom domain
+    Value: !Sub "${ApiDomain.RegionalDomainName}"
