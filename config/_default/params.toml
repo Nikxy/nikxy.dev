@@ -17,7 +17,7 @@ enableCodeCopy = false
 
 disableImageOptimization = true
 
-defaultBackgroundImage = "lily-pads.jpg" # used as default for background images 
+defaultBackgroundImage = "crop-lily-pads.jpg" # used as default for background images 
 # defaultFeaturedImage = "IMAGE.jpg" # used as default for featured images in all articles
 
 # highlightCurrentMenuArea = true
