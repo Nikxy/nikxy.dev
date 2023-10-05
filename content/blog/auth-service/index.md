@@ -28,7 +28,7 @@ I have deployed it on AWS cloud with lambda and dynamodb using a self-hosted Gog
 
 -   Use public-private secret keys instead of a simple JWT secret string.
 -   Comply with OAuth2 specifications.
--   Create an option for other services to check if user session is still valid.
+-   Create an api path for other services to check if user session is still valid.
 
 ## GitHub Repository
 
