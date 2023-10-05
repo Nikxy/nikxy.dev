@@ -9,13 +9,15 @@ categories: ["AWS"]
 tags: ["REST API", "Lambda", "Cloud Formation", "AWS SAM", "Localstack"]
 ---
 <style>
-    .highlight > pre, figure, p {
+    .highlight > pre, figure {
         margin:0 !important;
+    }
+    p {
+        margin-bottom: .25rem !important;
     }
 </style>
 ![Service Diagram](diagram.png)
-
-I'm planning on creating demo projects and I needed an auth service.  
+{{< spacing 1rem >}}
 Instead of creating a seperate auth logic in each project I decided to create a simple serverless JWT auth service to use in all projects.  
 I have deployed it on AWS cloud with lambda and dynamodb using a self-hosted Gogs and Jenkins CI/CD.
 
@@ -43,14 +45,13 @@ This is a POC and shouldn't be used in production as it is **NOT** protected aga
 ### Authentication
 
 1. Client sends a POST to `/login` with json body, example:
-{{< spacing -1rem >}}
-```json
-{
-    "domain":"demo",
-    "username":"demo",
-    "password":"password"
-}
-```
+    ```json
+    {
+        "domain":"demo",
+        "username":"demo",
+        "password":"password"
+    }
+    ```
 
 2. Lambda extracts JWT secrets from secrets manager and if specified domain exists continues, otherwise responds with invalid domain error.
 3. Lambda checks if user exists in dynamodb and password is correct, otherwise responds with an invalid username or password error.
@@ -167,10 +168,9 @@ Then load Sam arguments from the shell file and start sam in the background and 
 #### SAM Arguments and Caviats
 
 * Install docker cli in Jenkins image and mount the docker socket for the Jenkins container
-
-```yaml
-- /var/run/docker.sock:/var/run/docker.sock
-```
+    ```yaml
+    - /var/run/docker.sock:/var/run/docker.sock
+    ```
 
 * Set the ip of the docker interface with --container-host and --container-host-interface to 0.0.0.0 to allow SAM to access the lambda container.
 
