@@ -16,23 +16,26 @@ tags: ["REST API", "Lambda", "Cloud Formation", "AWS SAM", "Localstack"]
         margin-bottom: .25rem !important;
     }
 </style>
-![Service Diagram](diagram.png)
-{{< spacing 1rem >}}
 I'm in the procces of learning for the [{{< icon "link" >}}AWS Certified Developer - Associate](https://aws.amazon.com/certification/certified-developer-associate/),
-and for getting pratical knowledge I'm developing a few demo projects and I need auth in some of them.  
-Instead of creating a seperate auth logic in each project I decided to create a simple serverless JWT auth service to use in all projects.  
-I have deployed it on AWS cloud with lambda and dynamodb using a self-hosted Gogs and Jenkins CI/CD.
+and for getting practical knowledge I'm developing a few demo projects and I need authentication in some of them.  
+Instead of creating a seperate auth logic in each project I decided to create a simple serverless JWT auth service to use in all projects.
+
+I have deployed it on AWS cloud using lambda, dynamodb and secrets manager. For CI/CD I used self-hosted Gogs and Jenkins.
+
+## Diagram
+
+![Service Diagram](diagram.png)
 
 ## Features
 
--   Each project has its own "domain" with its JWT secret and users.
+-   Each project has its own `domain` with its JWT secret and users.
 -   The JWT secrets can be easily rotated using AWS Secrets Manager built-in features with a simple lambda function.
 
 ## In plan features
 
+-   Create an api path for other services to check if user session is still valid.
 -   Use public-private secret keys instead of a simple JWT secret string.
 -   Comply with OAuth2 specifications.
--   Create an api path for other services to check if user session is still valid.
 
 ## GitHub Repository
 
@@ -43,6 +46,8 @@ This is a POC and shouldn't be used in production as it is **NOT** protected aga
 {{< /alert >}}
 
 ## API Flow
+
+The api follows the REST api principle.
 
 ### Authentication
 
@@ -55,10 +60,10 @@ This is a POC and shouldn't be used in production as it is **NOT** protected aga
     }
     ```
 
-2. Lambda extracts JWT secrets from secrets manager and if specified domain exists continues, otherwise responds with invalid domain error.
+2. Lambda extracts JWT secrets from secrets manager and if specified domains secret exists continues, otherwise responds with invalid domain error.
 3. Lambda checks if user exists in dynamodb and password is correct, otherwise responds with an invalid username or password error.
 4. Lambda signs a JWT token using the domain secret and sends it to the client.
--   The JWT token contains the domain, username, session id and refresh token in the body.
+-   The JWT token contains the domain, username, session token and refresh token in the body.
 
 ### Token refreshing
 
@@ -76,6 +81,7 @@ This is a POC and shouldn't be used in production as it is **NOT** protected aga
 
 
 ## CI/CD
+
 Jenkins is running in a docker container and there is a caviat with that aproach which I will explain later.  
 Secrets Manager and DynamoDB are emulated locally using Localstack.  
 For running the integration tests I run the lambda and api gateway locally with AWS SAM.  
@@ -130,7 +136,8 @@ I used python pip with venv to install **AWS SAM** only for the build environmen
 ```groovy
 sh(returnStdout:true, script: 'python3 -m venv venv && venv/bin/pip install aws-sam-cli')
 ```
-Node modules install is done using `npm ci`
+
+If node modules exist from previous builds and no changes were made to the package files we can skip their installation, otherwise `npm ci` is called.
 
 #### Integration Testing with AWS SAM
 
@@ -162,12 +169,11 @@ Example config:
   "SAM_S3":"my-cloudformation"
 }
 ```
+
 Then load Sam arguments from the shell file and start sam in the background and log the output to sam.log
 
-{{< spacing 1em >}}
-{{< alert >}}Because Jenkins is running in a docker container we need to specify some arguments.{{< /alert >}}
-
-#### SAM Arguments and Caviats
+{{< badge >}}Caviat{{< /badge >}}
+Because Jenkins is running in a docker container we need to specify some arguments.
 
 * Install docker cli in Jenkins image and mount the docker socket for the Jenkins container
     ```yaml
@@ -181,9 +187,9 @@ Then load Sam arguments from the shell file and start sam in the background and 
 
 * Set the ip of the docker interface with --container-host and --container-host-interface to 0.0.0.0 to allow SAM to access the lambda container.
 
-* Also we need to setup the path to the code from the context of the docker host, for this I mounted a folder from the host to Jenkins workspaces folder and specified its path with the -v argument.
+* The path to the workspace in the context of the docker host need to be specified.
 
-Wait for AWS SAM to finish initializing, with timeout in case SAM failed to start:
+Next wait for AWS SAM to finish initializing, with timeout in case SAM failed to start:
 
 ```bash
 #!/bin/bash
