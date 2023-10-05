@@ -68,6 +68,8 @@ This is a POC and shouldn't be used in production as it is **NOT** protected aga
 1. Client sends a request to a service specifying the jwt token as bearer token in the Authorization header
 2. Service gets its JWT secret from AWS Secrets Manager and checks if provided JWT token is valid.
 3. `OPTIONAL` On critical operations the service can check in dynamodb if session is still valid.
+{{< spacing -1rem >}}
+    * This is not the best way as it isn't loosly coupled. API Check is planned for the future.
 
 
 ## CI/CD
