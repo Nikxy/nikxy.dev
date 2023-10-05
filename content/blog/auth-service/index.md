@@ -9,7 +9,7 @@ categories: ["AWS"]
 tags: ["REST API", "Lambda", "Cloud Formation", "AWS SAM", "Localstack"]
 ---
 <style>
-    .highlight > pre, figure {
+    .highlight > pre, figure, p {
         margin:0 !important;
     }
 </style>
@@ -68,7 +68,7 @@ This is a POC and shouldn't be used in production as it is **NOT** protected aga
 1. Client sends a request to a service specifying the jwt token as bearer token in the Authorization header
 2. Service gets its JWT secret from AWS Secrets Manager and checks if provided JWT token is valid.
 3. `OPTIONAL` On critical operations the service can check in dynamodb if session is still valid.
-{{< spacing -1rem >}}
+
     * This is not the best way as it isn't loosly coupled. API Check is planned for the future.
 
 
@@ -102,7 +102,7 @@ Before testing it should be running and populated with test data. Later I plan t
 #### Config
 
 Load config from jenkins configFileProvider
-{{< spacing -1rem >}}
+
 ```groovy
 def CONFIG_FILE = configFile(fileId:'auth-service-config', variable:'config_json')
 ...
@@ -112,7 +112,7 @@ configFileProvider([CONFIG_FILE]) {
 
 #### Dependencies
 Check if the dependencies exist and write that to a variable to install in the pipeline.
-{{< spacing -1rem >}}
+
 ```groovy
 environment {
     // Check if node_modules has been installed in previous builds
@@ -123,7 +123,7 @@ environment {
 }
 ```
 I used python pip with venv to install **AWS SAM** only for the build environment
-{{< spacing -1rem >}}
+
 ```groovy
 sh(returnStdout:true, script: 'python3 -m venv venv && venv/bin/pip install aws-sam-cli')
 ```
@@ -132,7 +132,7 @@ Node modules install is done using `npm ci`
 #### Integration Testing with AWS SAM
 
 Starting AWS SAM is made with the folowing code:
-{{< spacing -1rem >}}
+
 ```groovy
 config = readJSON(file:config_json)
 
@@ -148,7 +148,7 @@ sh "nohup venv/bin/sam $sam_arguments " +
 
 First load the config from Jenkins using Config File Provider plugin.  
 Example config:
-{{< spacing -1rem >}}
+
 ```json
 {
   "AWS_STACK_NAME":"auth-service",
@@ -167,7 +167,7 @@ Then load Sam arguments from the shell file and start sam in the background and 
 #### SAM Arguments and Caviats
 
 * Install docker cli in Jenkins image and mount the docker socket for the Jenkins container
-{{< spacing -1rem >}}
+
 ```yaml
 - /var/run/docker.sock:/var/run/docker.sock
 ```
@@ -177,7 +177,7 @@ Then load Sam arguments from the shell file and start sam in the background and 
 * Also we need to setup the path to the code from the context of the docker host, for this I mounted a folder from the host to Jenkins workspaces folder and specified its path with the -v argument.
 
 Wait for AWS SAM to finish initializing, with timeout in case SAM failed to start:
-{{< spacing -1rem >}}
+
 ```bash
 #!/bin/bash
 time=0
@@ -193,7 +193,7 @@ done
 ```
 
 And run the integration tests:
-{{< spacing -1rem >}}
+
 ```groovy
 def exitStatus =
     sh returnStatus: true, script: 'npm run test_ci:integration'
@@ -205,7 +205,7 @@ if (exitStatus != 0) {
 
 #### Deployment
 After all tests were passed we deploy the code using the same AWS SAM:
-{{< spacing -1rem >}}
+
 ```groovy
 configFileProvider([CONFIG_FILE]) {
     withCredentials([usernamePassword(
@@ -233,14 +233,14 @@ AWS SAM uses CloudFormation under the hood, so we need to specify s3 bucket wher
 {{< /alert >}}
 
 AWS SAM creates the following objects in the s3 bucket:
-{{< spacing -1rem >}}
+
 ```shell
 S3://bucket-name
 └── prefix
     ├── ****.template # CloudFormation template file
     └── ************* # Zip archive of the code
 ```
-{{< spacing -1rem >}}
+
 `NOTE` Each deployment a new object is created for the modified template or code.
 
 ## Summary
