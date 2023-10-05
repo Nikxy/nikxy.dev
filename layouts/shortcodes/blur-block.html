@@ -1,7 +1,7 @@
 <style>
     .blur-block {
         position: relative;
-        padding: 1rem;
+        padding: .5rem .2rem;
         color: white;
         text-shadow: 1px 1px .2rem rgba(0, 0, 0, .5);
     }
@@ -11,12 +11,11 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background:rgba(255, 255, 255, 0.1);
-        border-radius: 10%;
-        -webkit-filter: blur(.5rem);
-        filter: blur(.5rem);
+        background:rgba(255, 255, 255, 0.2);
+        border-radius: 1rem;
+        filter: blur(1px);
         z-index: 1;
-        backdrop-filter: blur(1px);
+        backdrop-filter: blur(.5rem);
         opacity: .8;
     }
     .blur-block .content {
