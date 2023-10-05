@@ -88,7 +88,7 @@ For running the integration tests I run the lambda and api gateway locally with 
 1. When code is pushed into the master branch, Gogs sends a webhook into Jenkins.
 2. Jenkins pulls the latest changes and starts the pipeline.
 3. Pipeline runs unit tests and integration tests using AWS SAM as a local deployment and Localstack as an emulation for the Secrets Manager and DynamoDB.
-4. If the tests passed without failing the pipeline uses AWS SAM to deploy the Cloudformation template and the code.
+4. If the tests passed the pipeline uses AWS SAM to deploy the Cloudformation template and the code.
 
 ### Jenkinsfile
 I will show the important parts here, if you want to see the full Jenkins file:  
@@ -97,59 +97,74 @@ I will show the important parts here, if you want to see the full Jenkins file:
 For integration testing I use Localstack as an AWS emulation for the secrets manager and dynamodb and AWS SAM for running lambdas and api gateway locally.  
 Before testing it should be running and populated with test data. Later I plan to implement localstack checks and population into the Jenkinsfile.
 
+#### Config
+
+Load config from jenkins configFileProvider  
+
+{{< spacing -1rem >}}
+
+```groovy
+def CONFIG_FILE = configFile(fileId:'auth-service-config', variable:'config_json')
+...
+configFileProvider([CONFIG_FILE]) {
+...
+```
+
 #### Dependencies
 Check if the dependencies exist and write that to a variable to install in the pipeline.
 {{< spacing -1rem >}}
 ```groovy
 environment {
-    // Check if node_modules exists
+    // Check if node_modules has been installed in previous builds
     TEST_NODE_MODULES_EXISTS = fileExists 'node_modules'
     SRC_NODE_MODULES_EXISTS = fileExists 'src/node_modules'
-    // Check if AWS SAM exists
+    // Check if AWS SAM has been installed in previous builds
     AWS_SAM_EXISTS = fileExists 'venv/bin/sam'
-```
-
-#### AWS settings
-AWS SAM is using CloudFormation under the hood, so we need to specify the stack name for the deployment and S3 bucket for template and code upload.
-{{< spacing -1rem >}}
-```groovy
-    // AWS Settings
-    AWS_REGION = 'il-central-1'
-    AWS_STACK_NAME = 'auth-service'
-
-    // SAM uploads template and code to the specified S3 bucket
-    AWS_S3_BUCKET = 'my-cloudformation-bucket'
-    AWS_S3_PREFIX = 'auth-service'
 }
 ```
-
-Those settings leads to the following objects in the s3 bucket:
+I used python pip with venv to install **AWS SAM** only for the build environment
 {{< spacing -1rem >}}
-```shell
-S3://my-cloudformation-bucket
-└── auth-service
-    ├── ****.template # CloudFormation template file
-    └── ************* # Zip archive of the code
+```groovy
+sh(returnStdout:true, script: 'python3 -m venv venv && venv/bin/pip install aws-sam-cli')
 ```
-{{< spacing -1rem >}}
-`NOTE` Each deployment a new object is created for the modified template or code.
+Node modules install is done using `npm ci`
 
 #### Integration Testing with AWS SAM
 
-Start sam in the background and log the output to sam.log:
+Starting AWS SAM is made with the folowing code:
 {{< spacing -1rem >}}
-```shell
-nohup venv/bin/sam local start-api \
---parameter-overrides \
-    ParameterKey=EnvironmentType,\
-    ParameterValue=test \
---warm-containers EAGER \
---container-host 172.17.0.1 --container-host-interface 0.0.0.0 \
---region ${AWS_REGION} -v /PATH_TO_WORKSPACE_ON_HOST \
-> $WORKSPACE/sam.log 2>&1 &
+```groovy
+config = readJSON(file:config_json)
+
+def sam_arguments = readFile "${WORKSPACE}/sam-api-arguments.sh"
+
+sh "nohup venv/bin/sam $sam_arguments " +
+    "--region $config.LOCALSTACK_TESTING_REGION "+
+    "-v $config.DOCKER_HOST_WORKSPACE " +
+    "--parameter-overrides EnvironmentType=test "+
+    "LocalStack=$config.LOCALSTACK_URL " +
+    "> $WORKSPACE/sam.log 2>&1 &"
 ```
+
+First load the config from Jenkins using Config File Provider plugin.  
+Example config:
+{{< spacing -1rem >}}
+```json
+{
+  "AWS_STACK_NAME":"auth-service",
+  "AWS_DEPLOY_REGION":"eu-central-1",
+  "LOCALSTACK_URL":"http://localstack/",
+  "LOCALSTACK_TESTING_REGION":"eu-central-1",
+  "DOCKER_HOST_WORKSPACE":"/home/dev/jenkins_workspace/auth-service",
+  "SAM_S3":"my-cloudformation"
+}
+```
+Then load Sam arguments from the shell file and start sam in the background and log the output to sam.log
+
 {{< spacing 1em >}}
 {{< alert >}}Because Jenkins is running in a docker container we need to specify some arguments.{{< /alert >}}
+
+#### SAM Arguments and Caviats
 
 * Install docker cli in Jenkins image and mount the docker socket for the Jenkins container
 {{< spacing -1rem >}}
@@ -161,15 +176,22 @@ nohup venv/bin/sam local start-api \
 
 * Also we need to setup the path to the code from the context of the docker host, for this I mounted a folder from the host to Jenkins workspaces folder and specified its path with the -v argument.
 
-Wait for AWS SAM to finish initializing:
+Wait for AWS SAM to finish initializing, with timeout in case SAM failed to start:
 {{< spacing -1rem >}}
-```shell
+```bash
 #!/bin/bash
-# Check if last line of sam log contains CTRL+C
+time=0
 while [[ $(tail -n 1 sam.log) != *"CTRL+C"* ]]
-    do echo "waiting for sam" && sleep 1
+do 
+    echo "waiting for sam"
+    sleep 1
+    if((time > 30)); then
+        exit 1
+    fi
+    time=$((time+1))
 done
 ```
+
 Run the integration tests:
 {{< spacing -1rem >}}
 ```groovy
@@ -185,22 +207,43 @@ if (exitStatus != 0) {
 After all tests were passed we deploy the code using the same AWS SAM:
 {{< spacing -1rem >}}
 ```groovy
-withCredentials([usernamePassword(
-    credentialsId: 'AWSJenkinsDeploy',
-    usernameVariable: 'AWS_ACCESS_KEY_ID',
-    passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-)]) {
-    sh 'venv/bin/sam deploy --stack-name ${AWS_STACK_NAME} \
-        --region ${AWS_REGION} --no-progressbar \
-        --s3-bucket ${AWS_S3_BUCKET} --s3-prefix ${AWS_S3_PREFIX} \
-        --on-failure ROLLBACK --capabilities CAPABILITY_NAMED_IAM'
+configFileProvider([CONFIG_FILE]) {
+    withCredentials([usernamePassword(
+            credentialsId: 'AWSJenkinsDeploy',
+            usernameVariable: 'AWS_ACCESS_KEY_ID',
+            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+        )]) {
+        script {
+            config = readJSON(file:config_json)
+            sh "venv/bin/sam deploy --no-progressbar "+
+                "--stack-name $config.AWS_STACK_NAME "+
+                "--region $config.AWS_DEPLOY_REGION "+
+                "--s3-bucket $config.SAM_S3 --s3-prefix sam-$config.AWS_STACK_NAME " +
+                "--on-failure ROLLBACK --capabilities CAPABILITY_NAMED_IAM"
+        }
+    }
 }
 ```
 * Use Jenkins credentials for AWS access key.
 * Specify --no-progressbar for less output to the pipeline console.
 * Specify --capabilities to enable creation of named IAM role specified in the CloudFormation template.
 
+{{< alert >}}
+AWS SAM uses CloudFormation under the hood, so we need to specify s3 bucket where to upload the template and code. I also specified a prefix to use one bucket for all projects and differentiate objects from other projects.
+{{< /alert >}}
+
+AWS SAM creates the following objects in the s3 bucket:
+{{< spacing -1rem >}}
+```shell
+S3://bucket-name
+└── prefix
+    ├── ****.template # CloudFormation template file
+    └── ************* # Zip archive of the code
+```
+{{< spacing -1rem >}}
+`NOTE` Each deployment a new object is created for the modified template or code.
 
 ## Summary
+
 This is my first project on AWS, I used it as a learning ground for my AWS Certifications and Jenkins. I learned a lot while creating it and I'm excited to use the AWS cloud and Jenkins.  
 For future projects I plan to use also AWS's CI/CD with CodePipeline.
