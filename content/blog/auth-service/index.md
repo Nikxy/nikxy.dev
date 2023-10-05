@@ -18,6 +18,8 @@ tags: ["REST API", "Lambda", "Cloud Formation", "AWS SAM", "Localstack"]
 </style>
 ![Service Diagram](diagram.png)
 {{< spacing 1rem >}}
+I'm in the procces of learning for the [{{< icon "link" >}}AWS Certified Developer - Associate](https://aws.amazon.com/certification/certified-developer-associate/),
+and for getting pratical knowledge I'm developing a few demo projects and I need auth in some of them.  
 Instead of creating a seperate auth logic in each project I decided to create a simple serverless JWT auth service to use in all projects.  
 I have deployed it on AWS cloud with lambda and dynamodb using a self-hosted Gogs and Jenkins CI/CD.
 
@@ -102,7 +104,7 @@ Before testing it should be running and populated with test data. Later I plan t
 
 #### Config
 
-Load config from jenkins configFileProvider
+Load config using Jenkins configFileProvider:
 
 ```groovy
 def CONFIG_FILE = configFile(fileId:'auth-service-config', variable:'config_json')
@@ -170,6 +172,11 @@ Then load Sam arguments from the shell file and start sam in the background and 
 * Install docker cli in Jenkins image and mount the docker socket for the Jenkins container
     ```yaml
     - /var/run/docker.sock:/var/run/docker.sock
+    ```
+* Test the connection by running docker ps from the jenkins container
+* If you are getting `permission denied while trying to connect to the Docker daemon socket`, use the following command on the docker host:
+    ```shell
+    sudo setfacl --modify user:[user or ID]:rw /var/run/docker.sock
     ```
 
 * Set the ip of the docker interface with --container-host and --container-host-interface to 0.0.0.0 to allow SAM to access the lambda container.
