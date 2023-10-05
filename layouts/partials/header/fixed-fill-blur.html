@@ -2,6 +2,7 @@
   #menu-blur {
     backdrop-filter: blur(.25rem);
     background:rgba(var(--color-neutral), 0.7);
+    transition: opacity .2s ease-out;
   }
   :is(.dark) #menu-blur {
     background:rgba(var(--color-neutral-800), 0.7);
@@ -19,6 +20,6 @@
   window.addEventListener('scroll', function (e) {
     var scroll = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
     var background_blur = document.getElementById('menu-blur');
-    background_blur.style.opacity = clamp(scroll / 200,0,1);
+    background_blur.style.opacity = clamp(scroll / 300,0,1);
   });
 </script>
