@@ -101,10 +101,8 @@ Before testing it should be running and populated with test data. Later I plan t
 
 #### Config
 
-Load config from jenkins configFileProvider  
-
+Load config from jenkins configFileProvider
 {{< spacing -1rem >}}
-
 ```groovy
 def CONFIG_FILE = configFile(fileId:'auth-service-config', variable:'config_json')
 ...
@@ -194,7 +192,7 @@ do
 done
 ```
 
-Run the integration tests:
+And run the integration tests:
 {{< spacing -1rem >}}
 ```groovy
 def exitStatus =
