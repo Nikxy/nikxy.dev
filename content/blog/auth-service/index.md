@@ -16,8 +16,7 @@ tags: ["REST API", "Lambda", "Cloud Formation", "AWS SAM", "Localstack"]
         margin-bottom: .25rem !important;
     }
 </style>
-I'm currently learning for the [{{< icon "link" >}}AWS Certified Developer - Associate](https://aws.amazon.com/certification/certified-developer-associate/),
-and for getting practical knowledge I'm developing a few demo projects and I need authentication in some of them.  
+I'm currently learning for the [{{< icon "link" >}}AWS Certified Developer - Associate](https://aws.amazon.com/certification/certified-developer-associate/) and for getting practical knowledge I'm developing a few demo projects and I need authentication in some of them.  
 Instead of creating a seperate auth logic in each project I decided to create a simple serverless JWT auth service to use in all projects.
 
 I have deployed it on AWS cloud using lambda, dynamodb and secrets manager. For CI/CD I used self-hosted Gogs and Jenkins.
