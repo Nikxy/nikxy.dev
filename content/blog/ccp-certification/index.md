@@ -18,9 +18,9 @@ So a few months ago I decided to pursue the AWS DevOps Professional Certificate,
 ## Resources
 
 I used only free resources starting with AWS's Skill Builder courses:
-- [Cloud Essentials - Knowledge Badge Readiness Path](https://explore.skillbuilder.aws/learn/lp/82/cloud-essentials-knowledge-badge-readiness-path)
+- [Cloud Essentials - Knowledge Badge Readiness Path](https://explore.skillbuilder.aws/learn/public/learning_plan/view/82/cloud-essentials-knowledge-badge-readiness-path)
 - Exam Prep Standard Course: AWS Certified Cloud Practitioner (CLF-C01)  
-    `NOTE` Today CLF-C01 isn't availiable anymore, use [CLF-C02](https://explore.skillbuilder.aws/learn/course/internal/view/elearning/16434/exam-prep-standard-course-aws-certified-cloud-practitioner-clf-c02-english) instead.
+    `NOTE` Today CLF-C01 isn't availiable anymore, use [CLF-C02](https://explore.skillbuilder.aws/learn/course/external/view/elearning/16434/exam-prep-standard-course-aws-certified-cloud-practitioner-clf-c02-english) instead.
 
 Finishing the courses I did a few practice exams I found with free coupons for Udemy on [r/udemyfreebies](https://www.reddit.com/r/udemyfreebies/), after each exam I went through the wrong answers and researched what was the right answer and why.
 
