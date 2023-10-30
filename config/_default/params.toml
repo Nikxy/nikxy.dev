@@ -17,7 +17,7 @@ enableCodeCopy = true
 
 disableImageOptimization = true
 
-defaultBackgroundImage = "img/crop-lily-pads.jpg" # used as default for background images 
+defaultBackgroundImage = "img/crop-lily-pads.webp" # used as default for background images 
 # defaultFeaturedImage = "IMAGE.jpg" # used as default for featured images in all articles
 
 # highlightCurrentMenuArea = true
@@ -36,7 +36,7 @@ smartTOC = true
 
 [homepage]
   layout = "hero" # valid options: page, profile, hero, card, background, custom
-  homepageImage = "img/lily-pads.jpg" # used in: hero, and card
+  homepageImage = "img/lily-pads.webp" # used in: hero, and card
   showRecent = true
   showRecentItems = 5
   showMoreLink = true

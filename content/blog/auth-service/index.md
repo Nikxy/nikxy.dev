@@ -23,7 +23,7 @@ I have deployed it on AWS cloud using lambda, dynamodb and secrets manager. For 
 
 ## Diagram
 
-![Service Diagram](diagram.png)
+![Service Diagram](diagram.webp)
 
 ## Features
 

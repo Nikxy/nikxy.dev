@@ -14,7 +14,7 @@ I'm really interested in working as a DevOps Engineer, and for the last year I h
 While I have experience with software development and working with servers, I have never worked with cloud services.  
 So a few months ago I decided to pursue the AWS DevOps Professional Certificate. As I had almost zero experience with AWS I went first with the Cloud Practitioner certification.
 
-![Cloud Practitioner to Developer with optional SysOps Administrator and DevOps Engineer deep dive](certification-path.jpg (My planned certification path))
+![Cloud Practitioner to Developer with optional SysOps Administrator and DevOps Engineer deep dive](certification-path.webp (My planned certification path))
 
 ## Resources
 
