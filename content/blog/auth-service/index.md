@@ -32,7 +32,6 @@ I have deployed it on AWS cloud using lambda, dynamodb and secrets manager. For 
 
 ## In plan features
 
--   Create an api path for other services to check if user session is still valid.
 -   Use public-private secret keys instead of a simple JWT secret string.
 -   Comply with OAuth2 specifications.
 
