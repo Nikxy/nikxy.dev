@@ -28,7 +28,7 @@ I have deployed it on AWS cloud using lambda, dynamodb and secrets manager. For 
 ## Features
 
 -   Each project has its own `domain` with its JWT secret and users.
--   The JWT secrets can be easily rotated using AWS Secrets Manager built-in features with a simple lambda function.
+-   The JWT secrets can be easily rotated using AWS Secrets Manager built-in features.
 
 ## In plan features
 
