@@ -70,12 +70,28 @@ The api follows the REST api principle.
 3. Lambda creates and signs a new JWT token.
 
 ### Authorization
+Authorization can be done in three ways:
+* Use a lambda authorizer in the service api gateway.
+* Use the jwt secret from the secrets manager and validate the token.
+* Call the auth api on path `/auth` to check the validity of the token.
 
-1. Client sends a request to a service specifying the jwt token as bearer token in the Authorization header
+#### Lambda Authorizer
+Setup an api gateway with an autorizer using the auth lambda.  
+Example is provided with the api gateway `/auth` path in the cloudformation template.
+1. Client sends a request with the jwt token in the header set by the cloudformation template to the api gateway.
+2. Api gateway authorizers the request using the auth lambda
+3. Api gateway continues to the integration
+
+#### Validation with secret
+1. Client sends a request to a service specifying the jwt token as bearer token in the authorization header set in cloudformation
 2. Service gets its JWT secret from AWS Secrets Manager and checks if provided JWT token is valid.
 3. `OPTIONAL` On critical operations the service can check in dynamodb if session is still valid.
 
     * This is not the best way as it isn't loosly coupled. API Check is planned for the future.
+
+#### Use the auth API
+1. Service send `GET` request to `/auth` path in the auth api with the user provided token
+2. The auth api responds status code `200` if valid or `403` otherwise.
 
 
 ## CI/CD
