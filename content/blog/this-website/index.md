@@ -6,7 +6,7 @@ draft: false
 description: Learn how I created my personal website using hugo and deployed it to AWS Amplify
 showAuthor: true
 categories: ["AWS", "Hugo"]
-tags: ["Website", "Delpoyment", "Amplify"]
+tags: ["Website", "Deployment", "Amplify"]
 ---
 
 I have made websites in the past using different technologies ranging from writing static html to dynamic systems in PHP or using Wordpress, additionally I'm currently developing a webapp for my protfolio using React.
